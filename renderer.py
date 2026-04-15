@@ -129,15 +129,16 @@ def render_overlay(
 
     if overlay_format == "mov":
         # Generate transparent RGBA overlay using PNG codec in MOV container.
-        # Key: format=rgba MUST be inside the lavfi source graph so the
-        # canvas is RGBA with alpha=0 from creation, BEFORE the ASS filter
-        # draws on it. Placing it in -vf instead causes FFmpeg's rgb24
-        # color source to fill alpha with 255 (fully opaque).
+        # libass does NOT write to the alpha channel — it only draws RGB.
+        # So we render ASS onto black twice: once for visible RGB, once
+        # converted to grayscale as an alpha matte. alphamerge combines them.
+        # Black pixels (background) → alpha 0 (transparent).
+        # Non-black pixels (text + glow) → alpha from luminance (opaque).
         cmd = [
             ffmpeg, "-y",
             "-f", "lavfi",
-            "-i", f"color=c=black@0.0:s={w}x{h}:d={duration:.3f},format=rgba",
-            "-vf", f"ass='{ass_escaped}'",
+            "-i", f"color=c=black:s={w}x{h}:d={duration:.3f},format=rgba",
+            "-vf", f"split[rgb][alpha];[rgb]ass='{ass_escaped}'[text];[alpha]ass='{ass_escaped}',format=gray[mask];[text][mask]alphamerge",
             "-c:v", "png",
             "-pix_fmt", "rgba",
             "-t", f"{duration:.3f}",
@@ -147,8 +148,8 @@ def render_overlay(
         cmd = [
             ffmpeg, "-y",
             "-f", "lavfi",
-            "-i", f"color=c=black@0.0:s={w}x{h}:d={duration:.3f},format=yuva420p",
-            "-vf", f"ass='{ass_escaped}'",
+            "-i", f"color=c=black:s={w}x{h}:d={duration:.3f},format=rgba",
+            "-vf", f"split[rgb][alpha];[rgb]ass='{ass_escaped}'[text];[alpha]ass='{ass_escaped}',format=gray[mask];[text][mask]alphamerge",
             "-c:v", "libvpx-vp9",
             "-pix_fmt", "yuva420p",
             "-b:v", "2M",
