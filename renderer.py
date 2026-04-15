@@ -145,6 +145,7 @@ def render_overlay(
             str(output_path),
         ]
     else:  # webm
+        # Same alphamerge approach; -auto-alt-ref 0 is required for VP9 alpha.
         cmd = [
             ffmpeg, "-y",
             "-f", "lavfi",
@@ -152,6 +153,7 @@ def render_overlay(
             "-vf", f"split[rgb][alpha];[rgb]ass='{ass_escaped}'[text];[alpha]ass='{ass_escaped}',format=gray[mask];[text][mask]alphamerge",
             "-c:v", "libvpx-vp9",
             "-pix_fmt", "yuva420p",
+            "-auto-alt-ref", "0",
             "-b:v", "2M",
             "-t", f"{duration:.3f}",
             str(output_path),

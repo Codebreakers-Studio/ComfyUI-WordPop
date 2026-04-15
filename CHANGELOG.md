@@ -6,7 +6,8 @@ All notable changes to ComfyUI-WordPop will be documented in this file.
 
 ### Bugfix
 
-- Fixed transparent overlay alpha channel using a two-pass alphamerge approach. FFmpeg's libass filter does not write to the alpha channel (only RGB), so a transparent canvas produced invisible text. The fix renders ASS text onto black twice via `split` — once for visible RGB, once converted to grayscale as a luma matte — then combines them with `alphamerge`. Black background pixels get alpha 0 (transparent), text/glow pixels get alpha from luminance (opaque).
+- Fixed transparent overlay alpha channel using a split+alphamerge approach. FFmpeg's libass filter only writes RGB, never alpha — so both a transparent canvas (alpha=0 everywhere, invisible text) and the original opaque canvas (alpha=255 everywhere, solid black) failed. The fix renders ASS text onto black twice via `split`: once for visible RGB, once converted to grayscale as a luma matte, then `alphamerge` combines them. Background pixels get alpha 0 (transparent), text/glow pixels get alpha from luminance (opaque).
+- Added `-auto-alt-ref 0` to WebM VP9 path, required for VP9 alpha channel encoding.
 
 ## [0.1.0] - 2026-04-03
 
