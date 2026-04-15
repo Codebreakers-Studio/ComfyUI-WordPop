@@ -2,6 +2,12 @@
 
 All notable changes to ComfyUI-WordPop will be documented in this file.
 
+## [0.1.1] - 2026-04-15
+
+### Bugfix
+
+- Fixed transparent overlay alpha channel: moved `format=rgba` (MOV) and `format=yuva420p` (WebM) from the `-vf` filter chain into the lavfi source graph so the canvas is created with alpha=0 from the start. Previously, FFmpeg's `color` source defaulted to rgb24 (no alpha), silently ignoring the `@0.0` opacity, and the later `format=rgba` conversion filled alpha with 255 (fully opaque), producing text on solid black instead of a transparent background.
+
 ## [0.1.0] - 2026-04-03
 
 ### Dev Beta — Initial Release

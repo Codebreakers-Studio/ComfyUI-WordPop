@@ -129,13 +129,15 @@ def render_overlay(
 
     if overlay_format == "mov":
         # Generate transparent RGBA overlay using PNG codec in MOV container.
-        # Key: format=rgba MUST be in the -vf chain so the ASS filter draws
-        # onto a proper RGBA surface (text opaque, background transparent).
+        # Key: format=rgba MUST be inside the lavfi source graph so the
+        # canvas is RGBA with alpha=0 from creation, BEFORE the ASS filter
+        # draws on it. Placing it in -vf instead causes FFmpeg's rgb24
+        # color source to fill alpha with 255 (fully opaque).
         cmd = [
             ffmpeg, "-y",
             "-f", "lavfi",
-            "-i", f"color=c=black@0.0:s={w}x{h}:d={duration:.3f}",
-            "-vf", f"format=rgba,ass='{ass_escaped}'",
+            "-i", f"color=c=black@0.0:s={w}x{h}:d={duration:.3f},format=rgba",
+            "-vf", f"ass='{ass_escaped}'",
             "-c:v", "png",
             "-pix_fmt", "rgba",
             "-t", f"{duration:.3f}",
@@ -145,8 +147,8 @@ def render_overlay(
         cmd = [
             ffmpeg, "-y",
             "-f", "lavfi",
-            "-i", f"color=c=black@0.0:s={w}x{h}:d={duration:.3f}",
-            "-vf", f"format=yuva420p,ass='{ass_escaped}'",
+            "-i", f"color=c=black@0.0:s={w}x{h}:d={duration:.3f},format=yuva420p",
+            "-vf", f"ass='{ass_escaped}'",
             "-c:v", "libvpx-vp9",
             "-pix_fmt", "yuva420p",
             "-b:v", "2M",
